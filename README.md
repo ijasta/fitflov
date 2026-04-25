@@ -8,8 +8,6 @@ The best part is that it doesn’t stay static — the workout plan updates dail
 
 👉 https://fitflov.netlify.app
 
-(replace with your actual link)
-
 ⚙️ What it does
 Calculates basic fitness data like BMI and calories
 Suggests personalized workout plans

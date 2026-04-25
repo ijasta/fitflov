@@ -6,7 +6,7 @@ The best part is that it doesn’t stay static — the workout plan updates dail
 
 🌐 Live Website
 
-👉 https://yourgymapp.netlify.app
+👉 https://fitflov.netlify.app
 
 (replace with your actual link)
 

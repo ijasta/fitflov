@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FitFlow — Admin Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    /* Admin specific overrides */
+    body { background: var(--bg); padding: 20px; font-family: var(--font-body); }
+    .admin-container { max-width: 1000px; margin: 0 auto; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .admin-title { font-family: var(--font-head); font-size: 28px; font-weight: 800; color: var(--text); }
+    
+    .setup-box { background: #FFFBEB; border: 1.5px dashed #D97706; padding: 20px; border-radius: 12px; margin-bottom: 24px; color: #D97706; }
+    .setup-box h3 { margin-bottom: 8px; font-size: 16px; font-weight: 700; }
+    .setup-box p { font-size: 14px; margin-bottom: 12px; }
+
+    .users-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .users-table th { background: var(--surface2); padding: 14px 16px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); border-bottom: 1px solid var(--border); }
+    .users-table td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .users-table tr:hover { background: var(--bg); }
+    
+    .delete-btn { background: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .delete-btn:hover { background: #FEE2E2; }
+  </style>
+</head>
+<body>
+  <div id="loginGate" style="max-width:400px; margin: 100px auto; background: var(--surface); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--border);">
+    <h2 style="font-family: var(--font-head); font-size: 24px; text-align: center; margin-bottom: 20px; color: var(--text);">Admin Portal</h2>
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);">Email</label>
+      <input type="email" id="adminEmail" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;" placeholder="Enter email">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <label style="display:block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);">Password</label>
+      <input type="password" id="adminPass" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box;" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" id="adminLoginBtn" style="width: 100%; justify-content: center; padding: 12px;" onclick="doAdminLogin()">Secure Login →</button>
+    <div id="loginErr" style="color: #EF4444; font-size: 13px; text-align: center; margin-top: 15px; display: none;"></div>
+  </div>
+
+  <div id="adminApp" class="admin-container" style="display: none;">
+    <div class="admin-header">
+      <div class="admin-title">FitFlow Admin Portal</div>
+      <button class="btn btn-ghost" onclick="window.location.href='index.html'">← Back to App</button>
+    </div>
+
+    <!-- Instructions if not setup -->
+    <div id="setupBox" class="setup-box" style="display: none;">
+      <h3>⚠️ Missing Service Role Key</h3>
+      <p>To view and delete users, you must edit <code>admin.js</code> and paste your <strong>Supabase Service Role Key</strong> inside it.</p>
+      <p><em>(You can find it in your Supabase Dashboard: Project Settings &rarr; API &rarr; `service_role` secret)</em></p>
+    </div>
+
+    <div class="stats-grid" id="adminStats">
+      <div class="stat-card">
+        <div class="stat-bar" style="background:#10B981"></div>
+        <div class="stat-icon" style="background:#ECFDF5; color:#059669">👥</div>
+        <div class="stat-lbl">Registered Users</div>
+        <div class="stat-num" id="statTotalUsers">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-bar" style="background:#0D9488"></div>
+        <div class="stat-icon" style="background:#F0FDFA; color:#0D9488">🏃</div>
+        <div class="stat-lbl">Total Workouts</div>
+        <div class="stat-num" id="statTotalWorkouts">--</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-family: var(--font-head); font-size: 18px; margin: 0;">Registered Accounts</h3>
+        <button class="btn btn-ghost btn-sm" onclick="fetchUsers()">↻ Refresh</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Joined Date</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text3);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
